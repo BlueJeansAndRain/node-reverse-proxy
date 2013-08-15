@@ -1,0 +1,31 @@
+{
+  "name": "node-reverse-proxy",
+  "version": "0.1.0",
+  "description": "A reverse proxy server.",
+  "main": "index.js",
+  "dependencies": {
+	"jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BlueJeansAndRain/node-reverse-proxy.git"
+  },
+  "keywords": [
+    "server",
+    "reverse",
+    "proxy",
+    "vhost",
+    "virtual",
+    "host",
+    "ssl",
+    "http"
+  ],
+  "author": "Chris Ackerman <bluejeansandrain@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BlueJeansAndRain/node-reverse-proxy/issues"
+  }
+}
