@@ -4,7 +4,7 @@
   "description": "A reverse proxy server.",
   "main": "index.js",
   "dependencies": {
-	"jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.1"
+    "jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.4"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
