@@ -3,8 +3,8 @@
 var core = require('jscore');
 
 core.util.readonly(exports, {
-	Server: require('./class/Server.js'),
-	Proxy: require('./class/Proxy.js'),
-	HTTP: require('./class/HTTP.js'),
-	SNI: require('./class/SNI.js')
+	Server: require('./src/Server.js'),
+	Proxy: require('./src/Proxy.js'),
+	HTTP: require('./src/HTTP.js'),
+	SNI: require('./src/SNI.js')
 });
