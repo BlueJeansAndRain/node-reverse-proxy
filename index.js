@@ -1,6 +1,10 @@
 "use strict";
 
-exports.Server = require('./class/Server.js');
-exports.Splice = require('./class/Splice.js');
-exports.HTTP = require('./class/HTTP.js');
-exports.SNI = require('./class/SNI.js');
+var core = require('jscore');
+
+core.util.readonly(exports, {
+	Server: require('./class/Server.js'),
+	Proxy: require('./class/Proxy.js'),
+	HTTP: require('./class/HTTP.js'),
+	SNI: require('./class/SNI.js')
+});

@@ -1,7 +1,8 @@
 {
-  "name": "node-reverse-proxy",
+  "name": "Proxima",
   "version": "0.1.0",
-  "description": "A reverse proxy server.",
+  "description": "An HTTP and TLS reverse proxy server intended to replace full web servers for proxying Node.js applications.",
+  "homepage": "https://github.com/BlueJeansAndRain/proxima",
   "main": "index.js",
   "dependencies": {
     "jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.4"
@@ -11,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/BlueJeansAndRain/node-reverse-proxy.git"
+    "url": "git@github.com:BlueJeansAndRain/proxima.git"
   },
   "keywords": [
     "server",
@@ -23,9 +24,13 @@
     "ssl",
     "http"
   ],
-  "author": "Chris Ackerman <bluejeansandrain@gmail.com>",
+  "author": {
+  	"name": "Chris Ackerman",
+  	"email": "bluejeansandrain@gmail.com",
+  	"url": "http://parallelnoodles.com/"
+  },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/BlueJeansAndRain/node-reverse-proxy/issues"
+    "url": "https://github.com/BlueJeansAndRain/proxima/issues"
   }
 }

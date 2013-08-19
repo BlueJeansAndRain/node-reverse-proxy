@@ -1,14 +1,25 @@
 "use strict";
 
 var core = require('jscore');
+var resource = core.reflect.resourceSync;
+var escapeHtml = core.str.escapeHtml;
 
 exports.nodeVersion = process.version.substr(1);
-exports.package = core.reflect.resourceSync('../package.json');
+exports.package = resource('../package.json');
 exports.serverHeader = 'node-reverse-proxy/' + exports.package.version + ' Node.js/' + exports.nodeVersion;
-exports.template = core.reflect.resourceSync('../resources/template.html')
+exports.errorHeaders = resource('../resources/errorHeaders.txt')
+	.replace(/<!--%SERVER%-->/g, exports.serverHeader) + "\n";
+exports.errorBody = exports.errorHeaders + resource('../resources/errorBody.html')
 	.replace(/<!--%NODE_VERSION%-->/g, exports.nodeVersion)
 	.replace(/<!--%SERVER%-->/g, exports.serverHeader)
-	.replace(/<!--%NAME%-->/g, exports.package.name)
+	.replace(/<!--%NAME%-->/g, escapeHtml(exports.package.name))
 	.replace(/<!--%VERSION%-->/g, exports.package.version)
-	.replace(/<!--%URL%-->/g, exports.package.repository.url)
-	.replace(/<!--%AUTHOR%-->/g, exports.package.author);
+	.replace(/<!--%HOMEPAGE%-->/g, exports.package.homepage)
+	.replace(/<!--%AUTHOR_NAME%-->/g, escapeHtml(exports.package.author.name))
+	.replace(/<!--%AUTHOR_EMAIL%-->/g, escapeHtml(exports.package.author.email));
+exports.responseNoRoute = exports.errorBody
+	.replace(/<!--%CODE%-->/g, '404')
+	.replace(/<!--%REASON%-->/g, 'Hostname Not Found');
+exports.responseUpstreamError = exports.errorBody
+	.replace(/<!--%CODE%-->/g, '504')
+	.replace(/<!--%REASON%-->/g, 'No Upstream Response');

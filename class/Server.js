@@ -12,9 +12,10 @@ var Server = module.exports = core.Class.extend(function()
 
 	this._servers = [];
 	this._routes = [];
+	this._proxies = [];
 })
 .implement({
-	_connectionIndex: 0,
+	_clientIndex: 0,
 	listen: core.fn.overload(
 	{
 		// TCP/IP
@@ -50,7 +51,7 @@ var Server = module.exports = core.Class.extend(function()
 			return this._listen(secure, [path]);
 		}
 	}),
-	virtualHost: core.fn.overload(
+	addRoute: core.fn.overload(
 	{
 		args: [
 			["string", "regex"],
@@ -58,13 +59,34 @@ var Server = module.exports = core.Class.extend(function()
 		],
 		call: function(hostname, options)
 		{
-			options = core.util.combine({}, options);
-			options.keepHalfOpen = true;
-
 			this._routes.push({
-				test: this._makeHostnameTest(hostname),
-				options: options
+				hostname: hostname,
+				rx: typeof hostname === 'string' ? this._globToRegex(hostname) : hostname,
+				options: core.util.combine({}, options, { keepHalfOpen: true })
 			});
+
+			return this;
+		}
+	}),
+	removeRoute: core.fn.overload(
+	{
+		args: [
+			["string", "regex"]
+		],
+		call: function(hostname)
+		{
+			var i = this._routes.length;
+
+			while (i--)
+			{
+				if (this._routes[i].hostname === hostname)
+				{
+					this._routes.splice(i, 1);
+					break;
+				}
+			}
+
+			return this;
 		}
 	}),
 	close: function()
@@ -78,10 +100,13 @@ var Server = module.exports = core.Class.extend(function()
 	_listen: function(secure, args)
 	{
 		var server = core.net.createServer({ allowHalfOpen: true });
-		server.on('listening', this._onListening.bind(this, server));
-		server.on('connection', this._onConnection.bind(this, server));
-		server.on('close', this._onClose.bind(this, server));
-		server.on('error', this._onError.bind(this, server));
+
+		server
+			.on('listening', this._onListening.bind(this, server))
+			.on('connection', this._onConnection.bind(this, server))
+			.on('close', this._onClose.bind(this, server))
+			.on('error', this._onError.bind(this, server));
+
 		server.secure = secure;
 		server.listen.apply(server, args);
 
@@ -89,32 +114,36 @@ var Server = module.exports = core.Class.extend(function()
 
 		return this;
 	},
-	_makeHostnameTest: function(hostname)
+	_globToRegex: function(glob)
 	{
-		// TODO: Make a test function for matching connecting hostnames to the given hostname.
+		return new RegExp(glob
+			.replace(/[\^\-\[\]\s\\{}()+.,$|#]/g, "\\$&")
+			.replace(/\*/g, '.*')
+			.replace(/\?/g, '[^.:]*')
+		);
 	},
 	_onListening: function(server)
 	{
 		this.emit('listening', server);
 	},
-	_onConnection: function(server, connection)
+	_onConnection: function(server, client)
 	{
-		connection.index = this._connectionIndex++;
-		connection.secure = !!server.secure;
+		client.index = this._clientIndex++;
+		client.secure = !!server.secure;
 
-		this._speculativeTimeout(connection);
+		this._speculativeTimeout(client);
 
-		connection.once('data', this._onData.bind(this, server, connection));
+		client.once('data', this._onData.bind(this, server, client));
 
-		this.emit('connection', connection, server);
+		this.emit('connection', client, server);
 	},
-	_onData: function(server, connection, firstPacket)
+	_onData: function(server, client, firstPacket)
 	{
 		var hostname = false;
 
 		try
 		{
-			if (connection.secure)
+			if (client.secure)
 				hostname = SNI.parse(firstPacket);
 			else
 				hostname = HTTP.parse(firstPacket);
@@ -123,14 +152,14 @@ var Server = module.exports = core.Class.extend(function()
 		{
 			if (!(err instanceof SNI.NotPresent))
 			{
-				connection.emit('warning', err.message ? err.message : err);
-				connection.destroy();
+				client.emit('warning', err.message ? err.message : err);
+				client.destroy();
 
 				return;
 			}
 		}
 
-		this._proxy(server, connection, firstPacket, hostname);
+		this._proxy(server, client, firstPacket, hostname);
 	},
 	_onProxy: function(proxy)
 	{
@@ -144,7 +173,7 @@ var Server = module.exports = core.Class.extend(function()
 	{
 		this.emit('error', err, server);
 	},
-	_speculativeTimeout: function(connection)
+	_speculativeTimeout: function(client)
 	{
 		// Some browsers make speculative connections which they never end up
 		// using. This timeout will destroy these extra connections if they are
@@ -152,44 +181,54 @@ var Server = module.exports = core.Class.extend(function()
 
 		var timeout = setTimeout(function()
 		{
-			connection.emit('warning', 'no data received');
-			connection.destroy();
+			client
+				.emit('warning', 'no data received')
+				.destroy();
 		}, 1000);
 
-		connection.once('data', function()
+		client.once('data', function()
 		{
 			clearTimeout(timeout);
 		});
 	},
-	_proxy: function(server, connection, firstPacket, hostname)
+	_proxy: function(server, client, firstPacket, hostname)
 	{
 		var route = this._resolveRoute(hostname);
 
 		if (!route)
 		{
-			if (connection.secure)
-			{
-				connection.destroy();
-			}
+			if (client.secure)
+				client.destroy();
 			else
-			{
-				// TODO: Send 404 page for unmatched non-secure routes.
-				connection.end();
-			}
+				client.end(constants.responseNoRoute, 'utf8');
 
 			return;
 		}
 
-		var proxy = new Proxy(server, connection, firstPacket);
+		var proxy = Proxy.create(server, client);
+
+		proxy.upstream.on('error', function(err)
+		{
+			if (client.bytesWritten === 0 && !client.secure)
+				proxy.client.end(constants.responseUpstreamError, 'utf8');
+		});
 
 		this._onProxy(proxy);
 
-		proxy.connect(route);
+		proxy.connect(route, firstPacket);
 	},
 	_resolveRoute: function(hostname)
 	{
-		// TODO: Match a virtual host and return the route connection options.
+		var i = this._routes.length;
+
+		while (i--)
+		{
+			if (this._routes[i].rx.test(hostname))
+				return this._routes[i].options;
+		}
+
+		return false;
 	}
 });
 
-Server.defineProperty(constants.package.version, 'version', { writable: false });
+core.util.readonly(Server, { version: constants.package.version });
