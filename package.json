@@ -4,6 +4,9 @@
   "description": "An HTTP and TLS reverse proxy server intended to replace full web servers for proxying Node.js applications.",
   "homepage": "https://github.com/BlueJeansAndRain/proxima",
   "main": "index.js",
+  "bin": {
+    "proxima": "cli.js"
+  },
   "dependencies": {
     "jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.5",
     "optimist": "0.6.x"
