@@ -1,8 +1,10 @@
 {
-  "name": "Proxima",
+  "name": "proxima",
+  "realName": "Proxima",
   "version": "0.1.0",
   "description": "An HTTP and TLS reverse proxy server intended to replace full web servers for proxying Node.js applications.",
   "homepage": "https://github.com/BlueJeansAndRain/proxima",
+  "preferGlobal": true,
   "main": "index.js",
   "bin": {
     "proxima": "cli.js"
@@ -26,7 +28,9 @@
     "virtual",
     "host",
     "ssl",
-    "http"
+    "http",
+    "tls",
+    "sni"
   ],
   "author": {
   	"name": "Chris Ackerman",
