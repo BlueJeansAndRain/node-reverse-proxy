@@ -13,7 +13,8 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 	Object.defineProperty(this, 'upstream', { value: new net.Socket({ allowHalfOpen: false }), enumerable: true, writable: false });
 
 	core.fn.bindAll(this,
-		'_onUpstreamConnection',
+		'_onUpstreamError',
+		'_onUpstreamConnect',
 		'_onUpstreamData',
 		'_onUpstreamEnd',
 		'_onUpstreamClose',
@@ -30,22 +31,31 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 	{
 		args: [
 			"object",
-			{ type: { is: "class", type: Buffer }, optional: true }
+			{ type: { is: "class", type: Buffer } },
+			{ type: "function", optional: true }
 		],
-		call: function(options, firstPacket)
+		call: function(options, firstPacket, onConnect)
 		{
+			if (onConnect)
+				this.on('connect', onConnect);
+
 			this._connectUpstream(options);
 
+			var self = this;
+
 			this.upstream
-				.on('connection', this._onUpstreamConnection)
-				.on('connection', function()
+				.once('error', this._onUpstreamError)
+				.on('connect', this._onUpstreamConnect)
+				.on('connect', function()
 				{
-					if (firstPacket)
-						this.write(firstPacket);
+					this.write(firstPacket);
+					this.removeListener('error', self._onUpstreamError);
 				})
 				.on('data', this._onUpstreamData)
 				.on('end', this._onUpstreamEnd)
 				.on('close', this._onUpstreamClose);
+
+			return this;
 		}
 	}),
 	close: core.fn.overload(
@@ -53,7 +63,12 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 		args: { type: "function", optional: true },
 		call: function(onClose)
 		{
+			if (onClose)
+				this.on('close', onClose);
 
+			this._onUpstreamEnd();
+
+			return this;
 		}
 	}),
 	_connectUpstream: function(options)
@@ -65,13 +80,23 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 		else
 			throw new Error("expecting port or path");
 	},
-	_onUpstreamConnection: function()
+	_onUpstreamError: function(err)
+	{
+		this.upstream
+			.removeListener('end', this._onUpstreamEnd)
+			.removeListener('close', this._onUpstreamClose);
+
+		core.fn.safe(this, 'emit', 'error', err);
+	},
+	_onUpstreamConnect: function()
 	{
 		this.client
 			.on('data', this._onClientData)
 			.on('end', this._onClientEnd)
 			.on('close', this._onClientClose)
 			.resume();
+
+		core.fn.safe(this, 'emit', 'connect');
 	},
 	_onUpstreamData: function(data)
 	{
@@ -79,6 +104,7 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 	},
 	_onUpstreamEnd: function()
 	{
+		this.upstream.removeListener('data', this._onUpstreamData);
 		this.client.end();
 	},
 	_onUpstreamClose: function()
@@ -96,6 +122,6 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 	_onClientClose: function()
 	{
 		this.upstream.destroy();
-		this.emit('close');
+		core.fn.safe(this, 'emit', 'close');
 	}
 });

@@ -20,6 +20,9 @@ exports.errorBody = exports.errorHeaders + resource('../resources/errorBody.html
 exports.responseNoRoute = exports.errorBody
 	.replace(/<!--%CODE%-->/g, '404')
 	.replace(/<!--%REASON%-->/g, 'Hostname Not Found');
+exports.responseUpstreamInvalid = exports.errorBody
+	.replace(/<!--%CODE%-->/g, '500')
+	.replace(/<!--%REASON%-->/g, 'Invalid Upstream Configuration');
 exports.responseUpstreamError = exports.errorBody
 	.replace(/<!--%CODE%-->/g, '504')
 	.replace(/<!--%REASON%-->/g, 'No Upstream Response');

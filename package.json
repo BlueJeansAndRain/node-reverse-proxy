@@ -5,7 +5,8 @@
   "homepage": "https://github.com/BlueJeansAndRain/proxima",
   "main": "index.js",
   "dependencies": {
-    "jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.4"
+    "jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.5",
+    "optimist": "0.6.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
