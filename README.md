@@ -23,3 +23,65 @@ Proxima is a purpose built web server for proxying incoming requests to other No
 [SNI](http://en.wikipedia.org/wiki/Server_Name_Indication) is supported for virtual hosting secure sites. _Windows XP, IE versions earlier than 9, and older Android browser will have problems._ Modern browsers should all support SNI. Proxima does not need to know about your certificates. It peaks at the SNI headers which are not encrypted and forwards the encrypted data as-is. There is no need for Proxima to read or modify the encrypted payload.
 
 FYI, there's no reason you can't use Proxima as a gateway to non-Node servers.
+
+Usage
+-----
+
+	Usage: proxima --help
+       proxima [--verbose] [--config=filename]
+
+	Options:
+	  --help         Display this help text.
+	  --config, -c   Set the configuration file path.
+	  --verbose, -v  Print log messages to stderr.
+
+Configuration File
+------------------
+
+Configuration files should contain a JSON object.
+
+Example:
+
+	{
+		"verbose": false,
+		"listeners": [
+			8080,
+			{ "port": 8081 },
+			{ "port": 8082, "host": "127.0.0.1" },
+			"/tmp/listener1.sock",
+			{ "path": "/tmp/listener2.sock" }
+		],
+		"routes": [
+			{
+				"hostname": "a.com",
+				"to": 8090
+			},
+			{
+				"hostname": "b.com",
+				"to": { "port": 8091 }
+			},
+			{
+				"hostname": "a.?.com",
+				"to": { "port": 8092, "host": "127.0.0.1" }
+			},
+			{
+				"hostname": "*.b.com",
+				"to": "/tmp/upstream1.sock"
+			},
+			{
+				"hostname": "c*d.com",
+				"to": { "path": "/tmp/upstream2.sock" }
+			},
+			{
+				"hostname": [
+					"e?f.com",
+					"g.?",
+					"h.*"
+				],
+				"to": 8093
+			}
+		],
+		"404": { "port": 8082, "host": "127.0.0.1" },
+		"500": { "path": "/tmp/404.sock" },
+		"504": false
+	}
