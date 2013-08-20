@@ -120,6 +120,10 @@ var Server = module.exports = core.Class.extend(function()
 			return this;
 		}
 	}),
+	openConnections: function()
+	{
+		return this._proxies.length;
+	},
 	close: function()
 	{
 		var i = this._servers.length;
@@ -190,10 +194,14 @@ var Server = module.exports = core.Class.extend(function()
 			}
 		}
 
+		core.fn.safe(client, 'emit', 'hostname', hostname);
+
 		var upstream = this._resolveRoute(hostname);
 
 		if (!upstream)
 		{
+			core.fn.safe(client, 'emit', 'warning', '404 Hostname Not Found');
+
 			if (client.secure)
 				client.destroy();
 			else
@@ -254,6 +262,8 @@ var Server = module.exports = core.Class.extend(function()
 			}.bind(this))
 			.on('error', function()
 			{
+				core.fn.safe(client, 'emit', 'warning', '504 No Upstream Response');
+
 				if (!client.secure && !silent)
 					this._on504(server, client, firstPacket);
 			}.bind(this));
@@ -266,6 +276,8 @@ var Server = module.exports = core.Class.extend(function()
 		}
 		catch (err)
 		{
+			core.fn.safe(client, 'emit', 'warning', '500 Invalid Upstream Configuration');
+
 			if (client.secure)
 				client.destroy();
 			else if (!silent)

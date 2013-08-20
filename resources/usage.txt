@@ -1,0 +1,4 @@
+%DESCRIPTION%
+
+Usage: proxima --help
+       proxima [--verbose] [--config=filename]

@@ -26,3 +26,5 @@ exports.responseUpstreamInvalid = exports.errorBody
 exports.responseUpstreamError = exports.errorBody
 	.replace(/<!--%CODE%-->/g, '504')
 	.replace(/<!--%REASON%-->/g, 'No Upstream Response');
+exports.usage = resource('../resources/usage.txt')
+	.replace(/%DESCRIPTION%/g, exports.package.description);
