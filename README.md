@@ -44,6 +44,8 @@ Example:
 
 	{
 		"verbose": false,
+		"uid": 1010,
+		"gid": "www",
 		"listeners": [
 			8080,
 			{ "port": 8081 },
