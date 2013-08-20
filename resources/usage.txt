@@ -1,3 +1,5 @@
+Proxima v%VERSION%
+
 %DESCRIPTION%
 
 Usage: proxima --help
