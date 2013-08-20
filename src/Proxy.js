@@ -2,15 +2,10 @@
 
 var core = require('jscore');
 var net = require('net');
-var constants = require('./Constants.js');
 
-var Proxy = module.exports = core.Class.extend(function(server, client)
+module.exports = core.Class.extend(function(server, client)
 {
 	core.sub.evented(this);
-
-	Object.defineProperty(this, 'server', { value: server, enumerable: true, writable: false });
-	Object.defineProperty(this, 'client', { value: client, enumerable: true, writable: false });
-	Object.defineProperty(this, 'upstream', { value: new net.Socket({ allowHalfOpen: false }), enumerable: true, writable: false });
 
 	core.fn.bindAll(this,
 		'_onUpstreamError',
@@ -23,6 +18,17 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 		'_onClientClose'
 	);
 
+	Object.defineProperty(this, 'server', { value: server, enumerable: true, writable: false });
+	Object.defineProperty(this, 'client', { value: client, enumerable: true, writable: false });
+	Object.defineProperty(this, 'upstream', { value: new net.Socket({ allowHalfOpen: false }), enumerable: true, writable: false });
+
+	this.upstream
+		.once('error', this._onUpstreamError)
+		.on('connect', this._onUpstreamConnect)
+		.on('data', this._onUpstreamData)
+		.on('end', this._onUpstreamEnd)
+		.on('close', this._onUpstreamClose);
+
 	this.client.pause();
 })
 .implement({
@@ -30,30 +36,31 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 	connect: core.fn.overload(
 	{
 		args: [
-			"object",
-			{ type: { is: "class", type: Buffer } },
-			{ type: "function", optional: true }
+			"number",
+			{ type: "string", optional: true },
+			{ type: { is: "class", type: Buffer } }
 		],
-		call: function(options, firstPacket, onConnect)
+		call: function(port, host, firstPacket)
 		{
-			if (onConnect)
-				this.on('connect', onConnect);
+			if (host)
+				this.upstream.connect(port, host);
+			else
+				this.upstream.connect(port);
 
-			this._connectUpstream(options);
+			this._sendFirstPacket(firstPacket);
 
-			var self = this;
-
-			this.upstream
-				.once('error', this._onUpstreamError)
-				.on('connect', this._onUpstreamConnect)
-				.on('connect', function()
-				{
-					this.write(firstPacket);
-					this.removeListener('error', self._onUpstreamError);
-				})
-				.on('data', this._onUpstreamData)
-				.on('end', this._onUpstreamEnd)
-				.on('close', this._onUpstreamClose);
+			return this;
+		}
+	},
+	{
+		args: [
+			"string",
+			{ type: { is: "class", type: Buffer } }
+		],
+		call: function(path, firstPacket)
+		{
+			this.upstream.connect(path);
+			this._sendFirstPacket(firstPacket);
 
 			return this;
 		}
@@ -71,14 +78,15 @@ var Proxy = module.exports = core.Class.extend(function(server, client)
 			return this;
 		}
 	}),
-	_connectUpstream: function(options)
+	_sendFirstPacket: function(firstPacket)
 	{
-		if (typeof options.port === 'number')
-			this.upstream.connect.apply(this.upstream, core.util.denull([options.port, options.host]));
-		else if (typeof options.path === 'string')
-			this.upstream.connect.apply(this.upstream, [options.path]);
-		else
-			throw new Error("expecting port or path");
+		var self = this;
+
+		this.upstream.on('connect', function()
+		{
+			this.write(firstPacket);
+			this.removeListener('error', self._onUpstreamError);
+		});
 	},
 	_onUpstreamError: function(err)
 	{

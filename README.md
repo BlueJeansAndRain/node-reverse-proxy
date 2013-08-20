@@ -47,9 +47,12 @@ Example:
 		"listeners": [
 			8080,
 			{ "port": 8081 },
-			{ "port": 8082, "host": "127.0.0.1" },
+			{ "port": 8082, "secure": true },
+			{ "port": 8083, "host": "127.0.0.1" },
+			{ "port": 8084, "host": "127.0.0.1", "secure": true },
 			"/tmp/listener1.sock",
-			{ "path": "/tmp/listener2.sock" }
+			{ "path": "/tmp/listener2.sock" },
+			{ "path": "/tmp/listener2.sock", "secure": true }
 		],
 		"routes": [
 			{
@@ -62,7 +65,7 @@ Example:
 			},
 			{
 				"hostname": "a.?.com",
-				"to": { "port": 8092, "host": "127.0.0.1" }
+				"to": { "port": 8092, "host": "127.0.0.1", "secure": true }
 			},
 			{
 				"hostname": "*.b.com",
@@ -81,7 +84,7 @@ Example:
 				"to": 8093
 			}
 		],
-		"404": { "port": 8082, "host": "127.0.0.1" },
+		"404": { "port": 8085, "host": "127.0.0.1" },
 		"500": { "path": "/tmp/404.sock" },
 		"504": false
 	}

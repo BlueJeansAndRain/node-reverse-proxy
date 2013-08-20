@@ -6,6 +6,7 @@ var constants = require('./Constants.js');
 var SNI = require('./SNI.js');
 var HTTP = require('./HTTP.js');
 var Proxy = require('./Proxy.js');
+var location = require('./location.js');
 
 var Server = module.exports = core.Class.extend(function()
 {
@@ -66,8 +67,30 @@ var Server = module.exports = core.Class.extend(function()
 			this._routes.push({
 				hostname: hostname,
 				rx: typeof hostname === 'string' ? this._globToRegex(hostname) : hostname,
-				upstream: core.util.combine({}, upstream, { allowHalfOpen: true })
+				secure: !!upstream.secure,
+				upstream: location.normalize(upstream)
 			});
+
+			return this;
+		}
+	}),
+	removeRoute: core.fn.overload(
+	{
+		args: [
+			["string", "regex"]
+		],
+		call: function(hostname)
+		{
+			var i = this._routes.length;
+
+			while (i--)
+			{
+				if (this._routes[i].hostname === hostname)
+				{
+					this._routes.splice(i, 1);
+					break;
+				}
+			}
 
 			return this;
 		}
@@ -96,27 +119,6 @@ var Server = module.exports = core.Class.extend(function()
 		call: function(value)
 		{
 			this._504 = value;
-			return this;
-		}
-	}),
-	removeRoute: core.fn.overload(
-	{
-		args: [
-			["string", "regex"]
-		],
-		call: function(hostname)
-		{
-			var i = this._routes.length;
-
-			while (i--)
-			{
-				if (this._routes[i].hostname === hostname)
-				{
-					this._routes.splice(i, 1);
-					break;
-				}
-			}
-
 			return this;
 		}
 	}),
@@ -196,7 +198,7 @@ var Server = module.exports = core.Class.extend(function()
 
 		core.fn.safe(client, 'emit', 'hostname', hostname);
 
-		var upstream = this._resolveRoute(hostname);
+		var upstream = this._resolveRoute(hostname, client.secure);
 
 		if (!upstream)
 		{
@@ -272,7 +274,7 @@ var Server = module.exports = core.Class.extend(function()
 
 		try
 		{
-			proxy.connect(upstream, firstPacket);
+			proxy.connect.apply(proxy, upstream.concat([firstPacket]));
 		}
 		catch (err)
 		{
@@ -286,13 +288,13 @@ var Server = module.exports = core.Class.extend(function()
 			this._onError(null, err);
 		}
 	},
-	_resolveRoute: function(hostname)
+	_resolveRoute: function(hostname, secure)
 	{
 		var i = this._routes.length;
 
 		while (i--)
 		{
-			if (this._routes[i].rx.test(hostname))
+			if (this._routes[i].secure === secure && this._routes[i].rx.test(hostname))
 				return this._routes[i].upstream;
 		}
 

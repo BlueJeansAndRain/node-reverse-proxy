@@ -5,6 +5,7 @@ var proxy = require('./');
 var core = require('jscore');
 var fs = require('fs');
 var constants = require('./src/Constants.js');
+var location = require('./src/location.js');
 
 var argv = require('optimist')
 	.usage(core.str.trim(constants.usage))
@@ -48,7 +49,7 @@ if (!(options.listeners instanceof Array) || options.listeners.length === 0)
 	process.exit(1);
 }
 
-void function(listeners)
+/*void function(listeners)
 {
 	var i = listeners.length;
 	while (i--)
@@ -64,7 +65,7 @@ void function(listeners)
 		}
 	}
 }
-(options.listeners);
+(options.listeners);*/
 
 function log(message)
 {
@@ -72,26 +73,11 @@ function log(message)
 		console.error(''+message);
 }
 
-function prettyObject(obj)
-{
-	var str = [];
-
-	for (var i in obj)
-	{
-		if (!obj.hasOwnProperty(i))
-			continue;
-
-		str.push(i + ': ' + obj[i]);
-	}
-
-	return str.join(', ');
-}
-
 var server = proxy.Server.create()
 	.on('connection', function(connection)
 	{
-		log('Connection #' + connection.index + ' from ' + prettyObject({ address: connection.remoteAddress, port: connection.remotePort }));
-		log(' to ' + prettyObject({ address: connection.localAddress, port: connection.localPort, secure: connection.secure }));
+		log('Connection #' + connection.index + ' from ' + location.pretty(connection.remotePort, connection.remoteAddress));
+		log(' to ' + location.pretty(connection.localPort, connection.localAddress, connection.secure));
 
 		connection
 			.on('hostname', function(hostname)
@@ -106,7 +92,7 @@ var server = proxy.Server.create()
 			{
 				log('Connection #' + this.index + ' ' + message);
 			})
-			.on('close', function(has_error)
+			.on('close', function(/*has_error*/)
 			{
 				log('Connection #' + this.index + ' closed');
 			});
@@ -120,20 +106,23 @@ log('Listeners:');
 
 void function(server, listeners)
 {
-	var i = 0,
-		max = listeners.length,
-		listener;
-
-	for (; i < max; ++i)
+	try
 	{
-		listener = listeners[i];
+		var i = 0,
+			max = listeners.length,
+			args;
 
-		if (typeof listener.port === 'number')
-			server.listen.apply(server, core.util.denull([listener.port, listener.host]));
-		else
-			server.listen(listener.path);
-
-		log(' ' + prettyObject(listener));
+		for (; i < max; ++i)
+		{
+			args = location.normalize(listeners[i], true);
+			server.listen.apply(server, args);
+			log(' ' + location.pretty(args));
+		}
+	}
+	catch (err)
+	{
+		console.error(err.message);
+		process.exit(1);
 	}
 }
 (server, options.listeners);
@@ -144,13 +133,23 @@ if (options.routes instanceof Array && options.routes.length > 0)
 {
 	void function(server, routes)
 	{
-		var i = 0,
-			max = routes.length,
-			route;
-
-		for (; i < max; ++i)
+		try
 		{
+			var i = 0,
+				max = routes.length;
 
+			for (; i < max; ++i)
+			{
+				if (!(routes[i] instanceof Object))
+					throw new Error("invalid route");
+
+				server.addRoute(routes[i].hostname, location.normalize(routes[i].to));
+			}
+		}
+		catch (err)
+		{
+			console.error(err.message);
+			process.exit(1);
 		}
 	}
 	(server, options.routes);
