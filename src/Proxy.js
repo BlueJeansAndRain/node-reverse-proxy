@@ -2,6 +2,7 @@
 
 var core = require('jscore');
 var net = require('net');
+var location = require('./location.js');
 
 module.exports = core.Class.extend(function(server, client)
 {
@@ -36,18 +37,28 @@ module.exports = core.Class.extend(function(server, client)
 	connect: core.fn.overload(
 	{
 		args: [
+			"object",
+			{ type: { is: "class", type: Buffer } }
+		],
+		call: function(options, firstPacket)
+		{
+			this._connect(firstPacket, options);
+
+			return this;
+		}
+	},
+	{
+		args: [
 			"number",
 			{ type: "string", optional: true },
 			{ type: { is: "class", type: Buffer } }
 		],
 		call: function(port, host, firstPacket)
 		{
-			if (host)
-				this.upstream.connect(port, host);
-			else
-				this.upstream.connect(port);
-
-			this._sendFirstPacket(firstPacket);
+			this._connect(firstPacket, {
+				port: port,
+				host: host
+			});
 
 			return this;
 		}
@@ -59,8 +70,9 @@ module.exports = core.Class.extend(function(server, client)
 		],
 		call: function(path, firstPacket)
 		{
-			this.upstream.connect(path);
-			this._sendFirstPacket(firstPacket);
+			this._connect(firstPacket, {
+				path: path
+			});
 
 			return this;
 		}
@@ -78,7 +90,7 @@ module.exports = core.Class.extend(function(server, client)
 			return this;
 		}
 	}),
-	_sendFirstPacket: function(firstPacket)
+	_connect: function(firstPacket, options)
 	{
 		var self = this;
 
@@ -87,6 +99,8 @@ module.exports = core.Class.extend(function(server, client)
 			this.write(firstPacket);
 			this.removeListener('error', self._onUpstreamError);
 		});
+
+		this.upstream.connect.apply(this.upstream, options);
 	},
 	_onUpstreamError: function(err)
 	{

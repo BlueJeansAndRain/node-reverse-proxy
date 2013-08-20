@@ -49,24 +49,6 @@ if (!(options.listeners instanceof Array) || options.listeners.length === 0)
 	process.exit(1);
 }
 
-/*void function(listeners)
-{
-	var i = listeners.length;
-	while (i--)
-	{
-		if (typeof listeners[i] === 'number')
-			listeners[i] = { port: listeners[i] };
-		else if (typeof listeners[i] === 'string')
-			listeners[i] = { path: listeners[i] };
-		else if (!(listeners[i] instanceof Object) || (typeof listeners[i].port !== 'number' && typeof listeners[i].path !== 'string'))
-		{
-			console.error("Invalid listener address or path.");
-			process.exit(1);
-		}
-	}
-}
-(options.listeners);*/
-
 function log(message)
 {
 	if (options.verbose && message != null)
@@ -106,12 +88,12 @@ log('Listeners:');
 
 void function(server, listeners)
 {
+	var i = 0,
+		max = listeners.length,
+		args;
+
 	try
 	{
-		var i = 0,
-			max = listeners.length,
-			args;
-
 		for (; i < max; ++i)
 		{
 			args = location.normalize(listeners[i], true);
@@ -121,7 +103,7 @@ void function(server, listeners)
 	}
 	catch (err)
 	{
-		console.error(err.message);
+		log("Error: invalid listener (" + i + ")");
 		process.exit(1);
 	}
 }
@@ -133,22 +115,25 @@ if (options.routes instanceof Array && options.routes.length > 0)
 {
 	void function(server, routes)
 	{
+		var i = 0,
+			max = routes.length;
+
 		try
 		{
-			var i = 0,
-				max = routes.length;
-
 			for (; i < max; ++i)
 			{
 				if (!(routes[i] instanceof Object))
 					throw new Error("invalid route");
 
-				server.addRoute(routes[i].hostname, location.normalize(routes[i].to));
+				server.addRoute(routes[i].hostname, routes[i].to);
+
+				log(' from "' + routes[i].hostname + '"');
+				log('   to ' + location.pretty(routes[i].to, true));
 			}
 		}
 		catch (err)
 		{
-			console.error(err.message);
+			log("Error: invalid route (" + i + ")");
 			process.exit(1);
 		}
 	}
@@ -157,6 +142,18 @@ if (options.routes instanceof Array && options.routes.length > 0)
 else
 {
 	log(' <none>');
+}
+
+if (/number|string/.test(typeof options.uid))
+{
+	process.setuid(options.uid);
+	log('UID: ' + options.uid);
+}
+
+if (/number|string/.test(typeof options.gid))
+{
+	process.setuid(options.gid);
+	log('GID: ' + options.gid);
 }
 
 log('');

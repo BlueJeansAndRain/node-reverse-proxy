@@ -9,44 +9,44 @@ exports.normalize = core.fn.overload(
 		["number", "string", "object"],
 		{ type: "boolean", optional: true, _: false}
 	],
-	call: function(location, keepSecure)
+	call: function(options, keepSecure)
 	{
-		if (typeof location === 'number')
-			location = { port: location };
-		else if (typeof location === 'string')
-			location = { path: location };
+		if (typeof options === 'number')
+			options = { port: options };
+		else if (typeof options === 'string')
+			options = { path: options };
 
-		if (typeof location.port === 'number')
+		if (typeof options.port === 'number')
 		{
-			if (location.port % 1 !== 0)
+			if (options.port % 1 !== 0)
 				throw new Error("expecting integer");
-			else if (location.port < 1 || location.port > 65535)
+			else if (options.port < 1 || options.port > 65535)
 				throw new Error("port out of range");
 
-			if (location.host != null)
+			if (options.host != null)
 			{
-				if (!net.isIP(location.host))
+				if (!net.isIP(options.host))
 					throw new Error("invalid host");
 
 				if (keepSecure)
-					return [location.port, location.host, !!location.secure];
+					return [options.port, options.host, !!options.secure];
 				else
-					return [location.port, location.host];
+					return [options.port, options.host];
 			}
 
 			if (keepSecure)
-				return [location.port, !!location.secure];
+				return [options.port, !!options.secure];
 			else
-				return [location.port];
+				return [options.port];
 		}
 
-		if (typeof location.path !== 'string')
+		if (typeof options.path !== 'string')
 			throw new Error("expecting port or path");
 
 		if (keepSecure)
-			return [location.path, !!location.secure];
+			return [options.path, !!options.secure];
 		else
-			return [location.path];
+			return [options.path];
 	}
 });
 
@@ -56,6 +56,16 @@ exports.pretty = core.fn.overload(
 	call: function(args)
 	{
 		return exports.pretty.apply(exports, args);
+	}
+},
+{
+	args: [
+		"object",
+		{ type: "boolean", optional: true, _: false }
+	],
+	call: function(options, keepSecure)
+	{
+		return exports.pretty.apply(exports, exports.normalize(options, keepSecure));
 	}
 },
 {

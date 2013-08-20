@@ -27,15 +27,12 @@ var Server = module.exports = core.Class.extend(function()
 		args: [
 			"number",
 			{ type: "string", optional: true },
-			{ type: "number", optional: true },
-			{ type: "boolean", optional: true, _: false }
+			{ type: "boolean", optional: true, _: false },
+			{ type: "number", optional: true }
 		],
 
 		call: function(port, host, secure, backlog)
 		{
-			if (port < 1 || port > 65535 || port % 1 !== 0)
-				throw new Error("Invalid port");
-
 			var args = [port];
 			if (!host)
 				args.push(host);
@@ -60,18 +57,45 @@ var Server = module.exports = core.Class.extend(function()
 	{
 		args: [
 			["string", "regex"],
-			{ type: "object" }
+			"object"
 		],
-		call: function(hostname, upstream)
+		call: function(hostname, options)
 		{
-			this._routes.push({
-				hostname: hostname,
-				rx: typeof hostname === 'string' ? this._globToRegex(hostname) : hostname,
-				secure: !!upstream.secure,
-				upstream: location.normalize(upstream)
+			this._addRoute(hostname, options);
+
+			return this;
+		}
+	},
+	{
+		args: [
+			["string", "regex"],
+			"number",
+			{ type: "string", optional: true },
+			{ type: "boolean", optional: true, _: false }
+		],
+		call: function(hostname, port, host, secure)
+		{
+			this._addRoute(hostname, {
+				port: port,
+				host: host,
+				secure: secure
 			});
 
 			return this;
+		}
+	},
+	{
+		args: [
+			["string", "regex"],
+			"string",
+			{ type: "boolean", optional: true, _: false }
+		],
+		call: function(hostname, path, secure)
+		{
+			this._addRoute(hostname, {
+				path: path,
+				secure: secure
+			});
 		}
 	}),
 	removeRoute: core.fn.overload(
@@ -150,6 +174,15 @@ var Server = module.exports = core.Class.extend(function()
 		this._servers.push(server);
 
 		return this;
+	},
+	_addRoute: function(hostname, options)
+	{
+		this._routes.push({
+			hostname: hostname,
+			rx: typeof hostname === 'string' ? this._globToRegex(hostname) : hostname,
+			secure: !!options.secure,
+			upstream: location.normalize(options)
+		});
 	},
 	_globToRegex: function(glob)
 	{
@@ -266,7 +299,9 @@ var Server = module.exports = core.Class.extend(function()
 			{
 				core.fn.safe(client, 'emit', 'warning', '504 No Upstream Response');
 
-				if (!client.secure && !silent)
+				if (client.secure)
+					client.destroy();
+				else if (!silent)
 					this._on504(server, client, firstPacket);
 			}.bind(this));
 
