@@ -1,7 +1,7 @@
 Proxima
 =======
 
-An [HTTP](http://en.wikipedia.org/wiki/Http) and [TLS](http://en.wikipedia.org/wiki/Transport_Layer_Security) [reverse proxy](http://en.wikipedia.org/wiki/Reverse_proxy) server intended to replace full web servers for proxying Node.js applications.
+An [HTTP](http://en.wikipedia.org/wiki/Http) and [TLS](http://en.wikipedia.org/wiki/Transport_Layer_Security) ([HTTPS](http://en.wikipedia.org/wiki/Https)) [reverse proxy](http://en.wikipedia.org/wiki/Reverse_proxy) server intended to replace full web servers for proxying Node.js applications.
 
 In a classic [Apache](http://httpd.apache.org/) or [Nginx](http://wiki.nginx.org/Main) web server configuration, you would use [virtual hosting](http://en.wikipedia.org/wiki/Virtual_Hosting) to host multiple sites on a single IP address. When making the switch to Node, you're faced with a few choices for continuing to host multiple sites per IP address:
 
@@ -28,12 +28,13 @@ Usage
 -----
 
 	Usage: proxima --help
-           proxima [--verbose] [--config=filename]
+           proxima [--verbose|--quiet] [--config=filename]
 
 	Options:
 	  --help         Display this help text.
 	  --config, -c   Set the configuration file path.  [default: "./proxima.json"]
 	  --verbose, -v  Print log messages to stderr.
+	  --quiet, -q    Do not print log messages to stderr.
 
 Configuration File
 ------------------

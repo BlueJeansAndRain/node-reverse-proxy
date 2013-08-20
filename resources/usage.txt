@@ -3,4 +3,4 @@ Proxima v%VERSION%
 %DESCRIPTION%
 
 Usage: proxima --help
-       proxima [--verbose] [--config=filename]
+       proxima [--verbose|--quiet] [--config=filename]

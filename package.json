@@ -2,7 +2,7 @@
   "name": "proxima",
   "realName": "Proxima",
   "version": "0.2.2",
-  "description": "An HTTP and TLS reverse proxy server intended to replace full web servers for proxying Node.js applications.",
+  "description": "An HTTP and TLS (HTTPS) reverse proxy server intended to replace full web servers for proxying Node.js applications.",
   "homepage": "https://github.com/BlueJeansAndRain/proxima",
   "preferGlobal": true,
   "main": "index.js",

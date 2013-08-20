@@ -24,6 +24,11 @@ var argv = require('optimist')
 		'boolean': true,
 		'description': 'Print log messages to stderr.'
 	})
+	.options( 'quiet', {
+		'alias': 'q',
+		'boolean': true,
+		'description': 'Do not print log messages to stderr.'
+	})
 	.argv;
 
 if (argv.help)
@@ -51,6 +56,9 @@ catch (err)
 	console.error(err.message + ': ' + configPath);
 	process.exit(1);
 }
+
+if (argv.quiet)
+	options.verbose = false;
 
 if (!(options.listeners instanceof Array) || options.listeners.length === 0)
 {
