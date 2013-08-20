@@ -10,7 +10,7 @@
     "proxima": "cli.js"
   },
   "dependencies": {
-    "jscore": "git://github.com/BlueJeansAndRain/jscore.git#0.6.5",
+    "jscore": "git://github.com/BlueJeansAndRain/jscore.git#v0.6.6",
     "optimist": "0.6.x"
   },
   "scripts": {
