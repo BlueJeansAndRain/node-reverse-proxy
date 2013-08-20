@@ -4,6 +4,7 @@
 var proxy = require('./');
 var core = require('jscore');
 var fs = require('fs');
+var path = require('path');
 var constants = require('./src/Constants.js');
 var location = require('./src/location.js');
 
@@ -15,7 +16,8 @@ var argv = require('optimist')
 	})
 	.options( 'config', {
 		'alias': 'c',
-		'description': 'Set the configuration file path.'
+		'description': 'Set the configuration file path.',
+		'default': './proxima.json'
 	})
 	.options( 'verbose', {
 		'alias': 'v',
@@ -31,17 +33,24 @@ if (argv.help)
 }
 
 var options = {
-	verbose: !!argv.verbose,
-	listeners: [
-		8080
-	],
+	listeners: [],
 	routes: [],
 	uid: null,
-	gid: null
+	gid: null,
+	verbose: !!argv.verbose
 };
 
-if (argv.config)
-	options = core.util.combine(options, JSON.parse(fs.readFileSync(argv.config, { encoding: 'utf8' })));
+var configPath = path.resolve(argv.config);
+
+try
+{
+	options = core.util.jsonConfig(configPath, options);
+}
+catch (err)
+{
+	console.error(err.message + ': ' + configPath);
+	process.exit(1);
+}
 
 if (!(options.listeners instanceof Array) || options.listeners.length === 0)
 {
@@ -54,6 +63,8 @@ function log(message)
 	if (options.verbose && message != null)
 		console.error(''+message);
 }
+
+log('Config: ' + configPath);
 
 var server = proxy.Server.create()
 	.on('connection', function(connection)

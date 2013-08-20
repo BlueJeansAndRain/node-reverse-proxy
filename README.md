@@ -28,11 +28,11 @@ Usage
 -----
 
 	Usage: proxima --help
-       proxima [--verbose] [--config=filename]
+           proxima [--verbose] [--config=filename]
 
 	Options:
 	  --help         Display this help text.
-	  --config, -c   Set the configuration file path.
+	  --config, -c   Set the configuration file path.  [default: "./proxima.json"]
 	  --verbose, -v  Print log messages to stderr.
 
 Configuration File
