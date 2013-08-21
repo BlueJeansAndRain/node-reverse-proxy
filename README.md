@@ -31,7 +31,7 @@ You can install Proxima using `npm` which is the prefered method.
 
 You can also checkout proxima from [GitHub](https://github.com/BlueJeansAndRain/proxima)
 
-	git clone git@github.com:BlueJeansAndRain/proxima.git
+	git https://github.com/BlueJeansAndRain/proxima.git
 	npm install
 
 	# If you want to install the package globally after checking it out.
@@ -41,13 +41,16 @@ Command Line Usage
 ------------------
 
 	Usage: proxima --help
-           proxima [--verbose|--quiet] [--config=filename]
+           proxima [--verbose|--quiet] [--uid=id] [--gid=id] [--workers=number] [--config=filename]
 
 	Options:
 	  --help         Display this help text.
 	  --config, -c   Set the configuration file path.  [default: "./proxima.json"]
 	  --verbose, -v  Print log messages to stderr.
 	  --quiet, -q    Do not print log messages to stderr.
+	  --uid, -u      The user ID to use after listeners have been bound.
+	  --gid, -g      The group ID to use after listeners have been bound.
+	  --workers, -w  The number of worker processes to spawn.
 
 Configuration File
 ------------------
@@ -58,6 +61,7 @@ Example:
 
 	{
 		"verbose": false,
+		"workers": 2,
 		"uid": 1010,
 		"gid": "www",
 		"listeners": [
@@ -109,15 +113,27 @@ Example:
 
 #### verbose
 
-True to print log messages to the STDERR stream. This option can be overridden by the command line `--verbose` or `--quite` options.
+True to print log messages to the STDERR stream. This option can be overridden by the command line `--verbose` or `--quiet` options.
+
+Defaults to false.
+
+#### workers
+
+The number of cluster works you want Proxima to use. If zero, the master process will handle requests.
+
+Defaults to 0.
 
 #### uid
 
 Either an integer ID or string name of a user that the Proxima process should run as. This will only work if the process is launched with root permissions. This allows proxima to bind to ports below 1024, and then reduce it's permissions to avoid being used for evil.
 
+Defaults to the current user's ID.
+
 #### gid
 
 Either an integer ID or a string name of a group that the Proxima should run as.
+
+Defaults to the current user's group ID.
 
 #### listeners
 
@@ -195,7 +211,7 @@ A number from 1 to 65535 indicating the [port](http://en.wikipedia.org/wiki/Port
 
 A string IPv4 or IPv6 address. This property is only meaningful if the `port` property is set.
 
-Defaults to "0.0.0.0" for all IPv4 addresses.
+If no `host` property is present, listeners will listen on all available IPv4 addresses, and routes will connect to localhost.
 
 ##### path
 

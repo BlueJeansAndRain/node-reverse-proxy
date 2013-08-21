@@ -198,8 +198,9 @@ var Server = module.exports = core.Class.extend(function()
 	},
 	_onConnection: function(server, client)
 	{
-		client.index = this._clientIndex++;
+		client.index = ++this._clientIndex;
 		client.secure = !!server.secure;
+		client.routeErrors = {};
 
 		this._speculativeTimeout(client);
 
@@ -237,10 +238,8 @@ var Server = module.exports = core.Class.extend(function()
 		{
 			core.fn.safe(client, 'emit', 'warning', '404 Hostname Not Found');
 
-			if (client.secure)
+			if (!this._on404(server, client, firstPacket))
 				client.destroy();
-			else
-				this._on404(server, client, firstPacket);
 		}
 		else
 		{
@@ -276,7 +275,7 @@ var Server = module.exports = core.Class.extend(function()
 			clearTimeout(timeout);
 		});
 	},
-	_proxy: function(server, client, firstPacket, upstream, silent)
+	_proxy: function(server, client, firstPacket, upstream)
 	{
 		var proxy = Proxy.create(server, client);
 
@@ -299,12 +298,8 @@ var Server = module.exports = core.Class.extend(function()
 			{
 				core.fn.safe(client, 'emit', 'warning', '504 No Upstream Response');
 
-				if (client.secure)
+				if (!this._on504(server, client, firstPacket))
 					client.destroy();
-				else if (silent)
-					client.end();
-				else
-					this._on504(server, client, firstPacket);
 			}.bind(this));
 
 		this._onProxy(proxy, upstream.slice(0));
@@ -317,12 +312,8 @@ var Server = module.exports = core.Class.extend(function()
 		{
 			core.fn.safe(client, 'emit', 'warning', '500 Invalid Upstream Configuration');
 
-			if (client.secure)
+			if (!this._on500(server, client, firstPacket))
 				client.destroy();
-			else if (silent)
-				client.end();
-			else
-				this._on500(server, client, firstPacket);
 
 			this._onError(null, err);
 		}
@@ -341,36 +332,57 @@ var Server = module.exports = core.Class.extend(function()
 	},
 	_on404: function(server, client, firstPacket)
 	{
-		if (this._404 === false)
-			return;
+		if (client.routeErrors['404'])
+			return false;
+		else
+			client.routeErrors['404'] = true;
+
+		if (client.secure || this._404 === false)
+			return false;
 		else if (this._404 === true)
 			client.end(constants.responseNoRoute, 'utf8');
 		else if (this._404 instanceof Function)
 			this._404(server, client, firstPacket);
 		else
 			this._proxy(server, client, firstPacket, this._404, true);
+
+		return true;
 	},
 	_on500: function(server, client, firstPacket)
 	{
-		if (this._500 === false)
-			return;
+		if (client.routeErrors['500'])
+			return false;
+		else
+			client.routeErrors['500'] = true;
+
+		if (client.secure || this._500 === false)
+			return false;
 		else if (this._500 === true)
 			client.end(constants.responseUpstreamInvalid, 'utf8');
 		else if (this._500 instanceof Function)
 			this._500(server, client, firstPacket);
 		else
 			this._proxy(server, client, firstPacket, this._500, true);
+
+		return true;
 	},
 	_on504: function(server, client, firstPacket)
 	{
-		if (this._504 === false)
-			return;
+		if (client.routeErrors['504'])
+			return false;
+		else
+			client.routeErrors['504'] = true;
+
+		if (client.secure || this._504 === false)
+			return false;
 		else if (this._504 === true)
 			client.end(constants.responseUpstreamError, 'utf8');
 		else if (this._504 instanceof Function)
 			this._504(server, client, firstPacket);
 		else
 			this._proxy(server, client, firstPacket, this._504, true);
+
+		return true;
 	}
 });
 
