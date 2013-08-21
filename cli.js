@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 "use strict";
 
-var proxy = require('./');
+var proxima = require('./');
 var core = require('jscore');
 var fs = require('fs');
 var path = require('path');
 var constants = require('./src/Constants.js');
-var location = require('./src/location.js');
 
 var argv = require('optimist')
 	.usage(core.str.trim(constants.usage))
@@ -74,13 +73,13 @@ function log(message)
 
 log('Config: ' + configPath);
 
-var server = proxy.Server.create()
-	.on('connection', function(connection)
+var server = proxima.Server.create()
+	.on('connection', function(client)
 	{
-		log('Connection #' + connection.index + ' from ' + location.pretty(connection.remotePort, connection.remoteAddress));
-		log(' to ' + location.pretty(connection.localPort, connection.localAddress, connection.secure));
+		log('Connection #' + client.index + ' from ' + proxima.endpoint.pretty(client.remotePort, client.remoteAddress));
+		log(' to ' + proxima.endpoint.pretty(client.localPort, client.localAddress, client.secure));
 
-		connection
+		client
 			.on('hostname', function(hostname)
 			{
 				log('Connection #' + this.index + ' hostname: ' + hostname);
@@ -98,10 +97,87 @@ var server = proxy.Server.create()
 				log('Connection #' + this.index + ' closed');
 			});
 	})
-	.on('proxy', function(proxy)
+	.on('proxy', function(proxy, connectArgs)
 	{
-		log('Connection #' + proxy.client.index + ' proxied');
+		log('Connection #' + proxy.client.index + (proxy.client.proxied ? ' re-proxy to ' : ' proxy to ') + proxima.endpoint.pretty(connectArgs));
+		proxy.client.proxied = true;
 	});
+
+log('Routes:');
+var noRoutes = true;
+
+if (options.routes instanceof Array && options.routes.length > 0)
+{
+	void function(server, routes)
+	{
+		var i = 0,
+			imax = routes.length,
+			route, hostnames, j, jmax;
+
+		try
+		{
+			for (; i < imax; ++i)
+			{
+				route = routes[i];
+
+				if (!(route instanceof Object))
+					throw new Error("invalid route");
+
+				hostnames = route.hostname;
+				if (!(hostnames instanceof Array))
+					hostnames = [hostnames];
+
+				for (j = 0, jmax = hostnames.length; j < jmax; ++j)
+				{
+					server.addRoute(hostnames[j], route.to);
+
+					log(' from "' + hostnames[j] + '" to ' + proxima.endpoint.pretty(route.to, true));
+
+					noRoutes = false;
+				}
+			}
+		}
+		catch (err)
+		{
+			console.error("Error: invalid route (" + i + ")");
+			process.exit(1);
+		}
+	}
+	(server, options.routes);
+}
+
+void function(server, options, errorCodes)
+{
+	var i = 0,
+		max = errorCodes.length,
+		code, value;
+
+	try
+	{
+		for (; i < max; ++i)
+		{
+			code = errorCodes[i];
+			value = options[errorCodes[i]];
+
+			if (value == null)
+				continue;
+
+			server['set' + code](value);
+			log(' error ' + code + ' to ' + (value ? proxima.endpoint.pretty(value) : 'disconnect'));
+
+			noRoutes = false;
+		}
+	}
+	catch (err)
+	{
+		console.error("Error: invalid " + errorCodes[i] + " value");
+		process.exit(1);
+	}
+}
+(server, options, ['404', '500', '504']);
+
+if (noRoutes)
+	log(' <none>');
 
 log('Listeners:');
 
@@ -115,53 +191,18 @@ void function(server, listeners)
 	{
 		for (; i < max; ++i)
 		{
-			args = location.normalize(listeners[i], true);
+			args = proxima.endpoint.normalize(listeners[i], true);
 			server.listen.apply(server, args);
-			log(' ' + location.pretty(args));
+			log(' ' + proxima.endpoint.pretty(args));
 		}
 	}
 	catch (err)
 	{
-		log("Error: invalid listener (" + i + ")");
+		console.error("Error: invalid listener (" + i + ")");
 		process.exit(1);
 	}
 }
 (server, options.listeners);
-
-log('Routes:');
-
-if (options.routes instanceof Array && options.routes.length > 0)
-{
-	void function(server, routes)
-	{
-		var i = 0,
-			max = routes.length;
-
-		try
-		{
-			for (; i < max; ++i)
-			{
-				if (!(routes[i] instanceof Object))
-					throw new Error("invalid route");
-
-				server.addRoute(routes[i].hostname, routes[i].to);
-
-				log(' from "' + routes[i].hostname + '"');
-				log('   to ' + location.pretty(routes[i].to, true));
-			}
-		}
-		catch (err)
-		{
-			log("Error: invalid route (" + i + ")");
-			process.exit(1);
-		}
-	}
-	(server, options.routes);
-}
-else
-{
-	log(' <none>');
-}
 
 if (/number|string/.test(typeof options.uid))
 {

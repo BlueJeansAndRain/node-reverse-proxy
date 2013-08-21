@@ -2,33 +2,15 @@
 
 var core = require('jscore');
 var net = require('net');
-var location = require('./location.js');
+var endpoint = require('./endpoint.js');
 
 module.exports = core.Class.extend(function(server, client)
 {
 	core.sub.evented(this);
 
-	core.fn.bindAll(this,
-		'_onUpstreamError',
-		'_onUpstreamConnect',
-		'_onUpstreamData',
-		'_onUpstreamEnd',
-		'_onUpstreamClose',
-		'_onClientData',
-		'_onClientEnd',
-		'_onClientClose'
-	);
-
 	Object.defineProperty(this, 'server', { value: server, enumerable: true, writable: false });
 	Object.defineProperty(this, 'client', { value: client, enumerable: true, writable: false });
 	Object.defineProperty(this, 'upstream', { value: new net.Socket({ allowHalfOpen: false }), enumerable: true, writable: false });
-
-	this.upstream
-		.once('error', this._onUpstreamError)
-		.on('connect', this._onUpstreamConnect)
-		.on('data', this._onUpstreamData)
-		.on('end', this._onUpstreamEnd)
-		.on('close', this._onUpstreamClose);
 
 	this.client.pause();
 })
@@ -92,58 +74,42 @@ module.exports = core.Class.extend(function(server, client)
 	}),
 	_connect: function(firstPacket, options)
 	{
-		var self = this;
+		var unpiped = false;
 
-		this.upstream.on('connect', function()
-		{
-			this.write(firstPacket);
-			this.removeListener('error', self._onUpstreamError);
-		});
-
-		this.upstream.connect.apply(this.upstream, options);
-	},
-	_onUpstreamError: function(err)
-	{
 		this.upstream
-			.removeListener('end', this._onUpstreamEnd)
-			.removeListener('close', this._onUpstreamClose);
+			.on('connect', function()
+			{
+				this.upstream.write(firstPacket);
+				this.client.resume();
 
-		core.fn.safe(this, 'emit', 'error', err);
-	},
-	_onUpstreamConnect: function()
-	{
+				core.fn.safe(this, 'emit', 'connect');
+			}.bind(this))
+			.on('error', function(err)
+			{
+				if (this.client.bytesWritten !== 0)
+					return;
+
+				this.client.unpipe(this.upstream).unpipe(this.client);
+				unpiped = true;
+
+				core.fn.safe(this, 'emit', 'error', err);
+			}.bind(this))
+			.on('close', function()
+			{
+				if (!unpiped)
+					this.client.destroy();
+
+				core.fn.safe(this, 'emit', 'close');
+			}.bind(this));
+
 		this.client
-			.on('data', this._onClientData)
-			.on('end', this._onClientEnd)
-			.on('close', this._onClientClose)
-			.resume();
+			.pipe(this.upstream).pipe(this.client)
+			.on('close', function()
+			{
+				if (!unpiped)
+					this.upstream.destroy();
+			}.bind(this));
 
-		core.fn.safe(this, 'emit', 'connect');
-	},
-	_onUpstreamData: function(data)
-	{
-		this.client.write(data);
-	},
-	_onUpstreamEnd: function()
-	{
-		this.upstream.removeListener('data', this._onUpstreamData);
-		this.client.end();
-	},
-	_onUpstreamClose: function()
-	{
-		this.client.destroy();
-	},
-	_onClientData: function(data)
-	{
-		this.upstream.write(data);
-	},
-	_onClientEnd: function()
-	{
-		this.upstream.end();
-	},
-	_onClientClose: function()
-	{
-		this.upstream.destroy();
-		core.fn.safe(this, 'emit', 'close');
+		this.upstream.connect.apply(this.upstream, endpoint.normalize(options));
 	}
 });

@@ -6,7 +6,7 @@ var constants = require('./Constants.js');
 var SNI = require('./SNI.js');
 var HTTP = require('./HTTP.js');
 var Proxy = require('./Proxy.js');
-var location = require('./location.js');
+var endpoint = require('./endpoint.js');
 
 var Server = module.exports = core.Class.extend(function()
 {
@@ -121,28 +121,28 @@ var Server = module.exports = core.Class.extend(function()
 	}),
 	set404: core.fn.overload(
 	{
-		args: [['boolean', "object", "function"]],
+		args: [['boolean', "number", "string", "function", "object"]],
 		call: function(value)
 		{
-			this._404 = value;
+			this._404 = (typeof value !== 'boolean' && !(value instanceof Function)) ? endpoint.normalize(value) : value;
 			return this;
 		}
 	}),
 	set500: core.fn.overload(
 	{
-		args: [['boolean', "object", "function"]],
+		args: [['boolean', "number", "string", "function", "object"]],
 		call: function(value)
 		{
-			this._500 = value;
+			this._500 = (typeof value !== 'boolean' && !(value instanceof Function)) ? endpoint.normalize(value) : value;
 			return this;
 		}
 	}),
 	set504: core.fn.overload(
 	{
-		args: [['boolean', "object", "function"]],
+		args: [['boolean', "number", "string", "function", "object"]],
 		call: function(value)
 		{
-			this._504 = value;
+			this._504 = (typeof value !== 'boolean' && !(value instanceof Function)) ? endpoint.normalize(value) : value;
 			return this;
 		}
 	}),
@@ -181,7 +181,7 @@ var Server = module.exports = core.Class.extend(function()
 			hostname: hostname,
 			rx: typeof hostname === 'string' ? this._globToRegex(hostname) : hostname,
 			secure: !!options.secure,
-			upstream: location.normalize(options)
+			upstream: endpoint.normalize(options)
 		});
 	},
 	_globToRegex: function(glob)
@@ -247,9 +247,9 @@ var Server = module.exports = core.Class.extend(function()
 			this._proxy(server, client, firstPacket, upstream);
 		}
 	},
-	_onProxy: function(proxy)
+	_onProxy: function(proxy, connectArgs)
 	{
-		core.fn.safe( this, 'emit', 'proxy', proxy);
+		core.fn.safe( this, 'emit', 'proxy', proxy, connectArgs);
 	},
 	_onClose: function(server)
 	{
@@ -301,11 +301,13 @@ var Server = module.exports = core.Class.extend(function()
 
 				if (client.secure)
 					client.destroy();
-				else if (!silent)
+				else if (silent)
+					client.end();
+				else
 					this._on504(server, client, firstPacket);
 			}.bind(this));
 
-		this._onProxy(proxy);
+		this._onProxy(proxy, upstream.slice(0));
 
 		try
 		{
@@ -317,7 +319,9 @@ var Server = module.exports = core.Class.extend(function()
 
 			if (client.secure)
 				client.destroy();
-			else if (!silent)
+			else if (silent)
+				client.end();
+			else
 				this._on500(server, client, firstPacket);
 
 			this._onError(null, err);

@@ -9,7 +9,7 @@ exports.normalize = core.fn.overload(
 		["number", "string", "object"],
 		{ type: "boolean", optional: true, _: false}
 	],
-	call: function(options, keepSecure)
+	call: function(options, showSecure)
 	{
 		if (typeof options === 'number')
 			options = { port: options };
@@ -28,13 +28,13 @@ exports.normalize = core.fn.overload(
 				if (!net.isIP(options.host))
 					throw new Error("invalid host");
 
-				if (keepSecure)
+				if (showSecure)
 					return [options.port, options.host, !!options.secure];
 				else
 					return [options.port, options.host];
 			}
 
-			if (keepSecure)
+			if (showSecure)
 				return [options.port, !!options.secure];
 			else
 				return [options.port];
@@ -43,7 +43,7 @@ exports.normalize = core.fn.overload(
 		if (typeof options.path !== 'string')
 			throw new Error("expecting port or path");
 
-		if (keepSecure)
+		if (showSecure)
 			return [options.path, !!options.secure];
 		else
 			return [options.path];
@@ -63,9 +63,9 @@ exports.pretty = core.fn.overload(
 		"object",
 		{ type: "boolean", optional: true, _: false }
 	],
-	call: function(options, keepSecure)
+	call: function(options, showSecure)
 	{
-		return exports.pretty.apply(exports, exports.normalize(options, keepSecure));
+		return exports.pretty.apply(exports, exports.normalize(options, showSecure));
 	}
 },
 {
