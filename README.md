@@ -249,6 +249,13 @@ The following browsers **do not** support SNI:
 WebSockets
 ----------
 
-They should just work.
+They just work.
 
 The initial negotation of for a [WebSocket](http://en.wikipedia.org/wiki/WebSocket) is done via HTTP, which means Proxima can route them normally. Once a socket has been routed, data is passively/transparently piped between the upstream and downstream sockets, including all WebSocket negotiation and data.
+
+Benchmarks
+----------
+
+There are none yet.
+
+If you create one and want to share, I would be happy to include some.
