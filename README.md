@@ -41,16 +41,17 @@ Command Line Usage
 ------------------
 
 	Usage: proxima --help
-           proxima [--verbose|--quiet] [--uid=id] [--gid=id] [--workers=number] [--config=filename]
+           proxima [--verbose|--quiet] [--uid=user] [--gid=group]
+                   [--workers=number] [--config=filename]
 
 	Options:
 	  --help         Display this help text.
-	  --config, -c   Set the configuration file path.  [default: "./proxima.json"]
 	  --verbose, -v  Print log messages to stderr.
 	  --quiet, -q    Do not print log messages to stderr.
-	  --uid, -u      The user ID to use after listeners have been bound.
-	  --gid, -g      The group ID to use after listeners have been bound.
-	  --workers, -w  The number of worker processes to spawn.
+	  --uid, -u      User ID to use after listeners have been bound.
+	  --gid, -g      Group ID to use after listeners have been bound.
+	  --workers, -w  How many worker processes to spawn.
+	  --config, -c   Set the configuration file path.                  [default: "./proxima.json"]
 
 Configuration File
 ------------------

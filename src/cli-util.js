@@ -72,6 +72,9 @@ exports.eachError = function(options, callback)
 
 exports.eachListener = function(listeners, callback)
 {
+	if (!(listeners instanceof Array) || listeners.length === 0)
+		throw new Error('no listeners');
+
 	var i = 0,
 		max = listeners.length,
 		args;
@@ -85,4 +88,22 @@ exports.eachListener = function(listeners, callback)
 	{
 		throw new Error("invalid listener (" + i + "): " + err.message);
 	}
+};
+
+exports.parseUID = function(value)
+{
+	if (typeof value === 'string')
+	{
+		if (/^\d+$/.test(value))
+			return parseInt(value, 10);
+		else
+			return value || null;
+	}
+	else if (typeof value === 'number')
+	{
+		value = value % 1;
+		return value > 0 ? value : null;
+	}
+
+	return null;
 };

@@ -10,24 +10,36 @@ exports.init = function()
 
 	var argv = require('optimist')
 		.usage(core.str.trim(constants.usage))
-		.options( 'help', {
+		.options('help', {
 			'boolean': true,
 			'description': 'Display this help text.'
 		})
-		.options( 'config', {
-			'alias': 'c',
-			'description': 'Set the configuration file path.',
-			'default': './proxima.json'
-		})
-		.options( 'verbose', {
+		.options('verbose', {
 			'alias': 'v',
 			'boolean': true,
 			'description': 'Print log messages to stderr.'
 		})
-		.options( 'quiet', {
+		.options('quiet', {
 			'alias': 'q',
 			'boolean': true,
 			'description': 'Do not print log messages to stderr.'
+		})
+		.options('uid', {
+			'alias': 'u',
+			'description': 'User ID to use after listeners have been bound.'
+		})
+		.options('gid', {
+			'alias': 'g',
+			'description': 'Group ID to use after listeners have been bound.'
+		})
+		.options('workers', {
+			'alias': 'w',
+			'description': 'How many worker processes to spawn.'
+		})
+		.options('config', {
+			'alias': 'c',
+			'description': 'Set the configuration file path.',
+			'default': './proxima.json'
 		})
 		.argv;
 
@@ -68,20 +80,10 @@ exports.init = function()
 	}
 
 	options.verbose = argv.quiet ? false : !!options.verbose;
+
 	options.workers = parseInt(options.workers, 10) || 0;
 	if (options.workers < 0)
 		options.workers = 0;
-	options.uid = /number|string/.test(options.uid) ? options.uid : null;
-	options.gid = /number|string/.test(options.gid) ? options.gid : null;
-
-	if (!(options.listeners instanceof Array) || options.listeners.length === 0)
-	{
-		console.error("Error: no listener addresses or paths");
-		process.exit(1);
-	}
-
-	if (configPath)
-		log('Config: ' + configPath);
 
 	var routes = [];
 	var errors = [];
@@ -89,6 +91,31 @@ exports.init = function()
 
 	try
 	{
+		if (argv.hasOwnProperty('uid'))
+		{
+			options.uid = util.parseUID(argv.uid);
+			if (!options.uid)
+				throw new Error("uid argument expects a value");
+		}
+		else
+		{
+			options.uid = util.parseUID(options.uid);
+		}
+
+		if (argv.hasOwnProperty('gid'))
+		{
+			options.gid = util.parseUID(argv.gid);
+			if (!options.gid)
+				throw new Error("gid argument expects a value");
+		}
+		else
+		{
+			options.gid = util.parseUID(options.gid);
+		}
+
+		if (configPath)
+			log('Config: ' + configPath);
+
 		log('Routes:');
 
 		util.eachRoute(options.routes, function(hostname, to)
