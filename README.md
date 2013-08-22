@@ -114,7 +114,9 @@ Example:
 
 #### verbose
 
-True to print log messages to the STDERR stream. This option can be overridden by the command line `--verbose` or `--quiet` options.
+True to print log messages to the STDERR stream.
+
+This option can be overridden by the command line `--verbose` or `--quiet` options.
 
 Defaults to false.
 
@@ -122,17 +124,23 @@ Defaults to false.
 
 The number of cluster works you want Proxima to use. If zero, the master process will handle requests.
 
+This option can be overridden by the command line `--workers` option.
+
 Defaults to 0.
 
 #### uid
 
 Either an integer ID or string name of a user that the Proxima process should run as. This will only work if the process is launched with root permissions. This allows proxima to bind to ports below 1024, and then reduce it's permissions to avoid being used for evil.
 
+This option can be overridden by the command line `--uid` option.
+
 Defaults to the current user's ID.
 
 #### gid
 
 Either an integer ID or a string name of a group that the Proxima should run as.
+
+This option can be overridden by the command line `--gid` option.
 
 Defaults to the current user's group ID.
 
@@ -145,6 +153,10 @@ _Note: An incoming connection on a secure listener can only match secure routes,
 #### routes
 
 An array of objects describing how Proxima should proxy incoming connections on listeners.
+
+The routes array is ordered from lowest priority at the top, to highest priority at the bottom. This means that the last route in the routes list will be tested first for each incoming connection. If you have a _catch-all_ route "*", it should probably be the very first thing in the routes list.
+
+A catch-all route is a route with the hostname "*", which will match any hostname. This is similar to the `404` option, but will be matched as part of the routes processesing which means before `404` is used. Unlike `404`, a catchall can be secure.
 
 Each route object _must_ have the following two properties.
 
@@ -164,13 +176,17 @@ An [endpoint](#configuration-endpoints) that Proxima should bi-directionally for
 
 #### 404
 
-An optional boolean or [endpoint](#configuration-endpoints) value which tells Proxima what to do if an incoming request does not match a route.
+An optional boolean or [endpoint](#configuration-endpoints) value which tells Proxima what to do if an incoming non-secure request does not match a route.
+
+_Note: If you use a non-secure catch-all "*" route, this option will never be used._
+
+This has no affect on secure connections which are always closed if there is no route match. If you really need to catch unmatched secure requests, use a secure catch-all "*" route.
 
 Defaults to true.
 
 ##### Boolean
 
-True will allow Proxima to display its own error page for non-secure connections. False will close the connection without responding.
+True will allow Proxima to display its own error page. False will close the connection without responding.
 
 ##### Endpoint
 
@@ -178,13 +194,17 @@ Proxy the incoming unmatched connection.
 
 #### 500
 
-An optional boolean or [endpoint](#configuration-endpoints) value which tells Proxima what to do if an incoming request matches a route, but an error occurs when attempting to connect to the route's `to` endpoint.
+An optional boolean or [endpoint](#configuration-endpoints) value which tells Proxima what to do if an incoming non-secure request matches a route, but an error occurs when attempting to connect to the route's `to` endpoint.
+
+This has no affect on secure connections which are always closed on error.
 
 Defaults to true.
 
 #### 505
 
-An optional boolean or [endpoint](#configuration-endpoints) value which tells Proxima what to do if an incoming request matches a route and a connection is successfully made to the route's `to` endpoint, but an error or timeout occurs on the proxy socket before the upstream server sends a response.
+An optional boolean or [endpoint](#configuration-endpoints) value which tells Proxima what to do if an incoming non-secure request matches a route and a connection is successfully made to the route's `to` endpoint, but an error or timeout occurs on the proxy socket before the upstream server sends a response.
+
+This has no affect on secure connections which are always closed on error.
 
 Defaults to true.
 
@@ -216,7 +236,7 @@ If no `host` property is present, listeners will listen on all available IPv4 ad
 
 ##### path
 
-A string value which represents a UNIX filesystem socket path.
+A string value which represents a [UNIX domain socket](http://en.wikipedia.org/wiki/Unix_domain_socket) path.
 
 ##### secure
 
