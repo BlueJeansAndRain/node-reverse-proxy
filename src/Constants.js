@@ -6,9 +6,10 @@ var escapeHtml = core.str.escapeHtml;
 
 exports.nodeVersion = process.version.substr(1);
 exports.package = resource('../package.json');
-exports.serverHeader = 'node-reverse-proxy/' + exports.package.version + ' Node.js/' + exports.nodeVersion;
+exports.serverHeader = exports.package.realName + '/' + exports.package.version + ' Node.js/' + exports.nodeVersion;
 exports.errorHeaders = resource('../resources/errorHeaders.txt')
-	.replace(/<!--%SERVER%-->/g, exports.serverHeader) + "\n";
+	.replace(/\r\n|\r|\n/, "\r\n")
+	.replace(/<!--%SERVER%-->/g, exports.serverHeader) + "\r\n\r\n";
 exports.errorBody = exports.errorHeaders + resource('../resources/errorBody.html')
 	.replace(/<!--%NODE_VERSION%-->/g, exports.nodeVersion)
 	.replace(/<!--%SERVER%-->/g, exports.serverHeader)
@@ -16,7 +17,8 @@ exports.errorBody = exports.errorHeaders + resource('../resources/errorBody.html
 	.replace(/<!--%VERSION%-->/g, exports.package.version)
 	.replace(/<!--%HOMEPAGE%-->/g, exports.package.homepage)
 	.replace(/<!--%AUTHOR_NAME%-->/g, escapeHtml(exports.package.author.name))
-	.replace(/<!--%AUTHOR_EMAIL%-->/g, escapeHtml(exports.package.author.email));
+	.replace(/<!--%AUTHOR_EMAIL%-->/g, escapeHtml(exports.package.author.email))
+	.replace(/^\s+/, '');
 exports.responseNoRoute = exports.errorBody
 	.replace(/<!--%CODE%-->/g, '404')
 	.replace(/<!--%REASON%-->/g, 'Hostname Not Found');

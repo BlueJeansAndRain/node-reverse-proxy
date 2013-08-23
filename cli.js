@@ -19,11 +19,7 @@ if (cluster.isMaster)
 		// No workers, so the master process will do the work.
 
 		require('./src/cli-worker.js').init(
-			options.worker.routes,
-			options.worker.errors,
-			options.worker.listeners,
-			options.worker.uid,
-			options.worker.gid,
+			options.worker,
 			function(message)
 			{
 				if (options.verbose && message != null)
@@ -91,11 +87,7 @@ else if (cluster.isWorker)
 		if (data.is === 'init')
 		{
 			require('./src/cli-worker.js').init(
-				data.options.routes,
-				data.options.errors,
-				data.options.listeners,
-				data.options.uid,
-				data.options.gid,
+				data.options,
 				function(message)
 				{
 					process.send({ is: 'log', message: message });

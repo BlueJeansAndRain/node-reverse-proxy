@@ -58,7 +58,8 @@ exports.init = function()
 		'routes': [],
 		'404': true,
 		'500': true,
-		'504': true
+		'504': true,
+		'specTimeout': 1000
 	};
 
 	function log(message)
@@ -116,6 +117,9 @@ exports.init = function()
 		if (configPath)
 			log('Config: ' + configPath);
 
+		if (typeof options.specTimeout !== 'number' || options.specTimeout < 0)
+			throw new Error("specTimeout expects an integer");
+
 		log('Routes:');
 
 		util.eachRoute(options.routes, function(hostname, to)
@@ -154,17 +158,21 @@ exports.init = function()
 		process.exit(1);
 	}
 
-	log('Workers: ' + options.workers);
+	log('Options:');
+
+	log(' Speculative Timeout: ' + (options.specTimeout / 1000) + 's');
+
+	log(' Workers: ' + options.workers);
 
 	if (options.uid)
-		log('UID: ' + options.uid);
+		log(' UID: ' + options.uid);
 	else
-		log('UID: ' + process.getuid());
+		log(' UID: ' + process.getuid());
 
 	if (options.gid)
-		log('GID: ' + options.gid);
+		log(' GID: ' + options.gid);
 	else
-		log('GID: ' + process.getgid());
+		log(' GID: ' + process.getgid());
 
 	log('');
 
@@ -177,7 +185,8 @@ exports.init = function()
 			errors: errors,
 			listeners: listeners,
 			uid: options.uid,
-			gid: options.gid
+			gid: options.gid,
+			specTimeout: options.specTimeout
 		}
 	};
 };

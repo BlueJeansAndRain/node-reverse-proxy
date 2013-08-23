@@ -1,3 +1,4 @@
 HTTP/1.1 <!--%CODE%--> <!--%REASON%-->
+Connection: close
 Content-Type: text/html; charset=utf-8
 Server: <!--%SERVER%-->

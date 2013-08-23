@@ -8,15 +8,24 @@ var HTTP = require('./HTTP.js');
 var Proxy = require('./Proxy.js');
 var endpoint = require('./endpoint.js');
 
-var Server = module.exports = core.Class.extend(function()
+var Server = module.exports = core.Class.extend(core.fn.overload(
 {
-	core.sub.evented(this);
+	args: { type: "object", optional: true },
+	call: function(options)
+	{
+		options = options || {};
+		if (options.specTimeout != null)
+			this._speculativeTimeout = core.type.coerce.integer(options.specTimeout, 0);
 
-	this._servers = [];
-	this._routes = [];
-	this._proxies = [];
-})
+		core.sub.evented(this);
+
+		this._servers = [];
+		this._routes = [];
+		this._proxies = [];
+	}
+}))
 .implement({
+	_speculativeTimeout: 1000,
 	_clientIndex: 0,
 	_404: true,
 	_500: true,
@@ -202,7 +211,7 @@ var Server = module.exports = core.Class.extend(function()
 		client.secure = !!server.secure;
 		client.routeErrors = {};
 
-		this._speculativeTimeout(client);
+		this._timeout(client);
 
 		client.once('data', this._onData.bind(this, server, client));
 
@@ -258,17 +267,20 @@ var Server = module.exports = core.Class.extend(function()
 	{
 		core.fn.safe( this, 'emit', 'error', err, server);
 	},
-	_speculativeTimeout: function(client)
+	_timeout: function(client)
 	{
 		// Some browsers make speculative connections which they never end up
 		// using. This timeout will destroy these extra connections if they are
 		// not used within one second.
 
+		if (!this._speculativeTimeout)
+			return;
+
 		var timeout = setTimeout(function()
 		{
-			core.fn.safe(client, 'emit', 'warning', 'no data received');
+			core.fn.safe(client, 'emit', 'warning', 'no data received (speculative timeout)');
 			client.destroy();
-		}, 1000);
+		}, this._speculativeTimeout);
 
 		client.once('data', function()
 		{

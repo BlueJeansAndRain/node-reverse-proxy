@@ -107,7 +107,8 @@ Example:
 		],
 		"404": { "port": 8085, "host": "127.0.0.1" },
 		"500": { "path": "/tmp/404.sock" },
-		"504": false
+		"504": false,
+		"specTimeout": 1000
 	}
 
 ### Configuration Options
@@ -207,6 +208,16 @@ An optional boolean or [endpoint](#configuration-endpoints) value which tells Pr
 This has no affect on secure connections which are always closed on error.
 
 Defaults to true.
+
+#### specTimeout
+
+An optional integer value which tells Proxima how long to wait for data on new connections before closing them.
+
+Browsers sometimes open extra connections to the server just in case they might need it in the near future. These are called speculative connections and the browser doesn't send any data on the connection until it decides it needs the extra parallelism. This means that the connection cannot be routed, since no host header is sent. Because it isn't routed, no upstream apps have an opportunity to set a reasonable timeout, leaving it up to the browser to close this dangling connection whenever it feels like it.
+
+This option allows Proxima to time the connection out if no data is recieved. The timeout is removed as soon as any data is recieved.
+
+Defaults to 1000 (milliseconds). Set it to 0 to never timeout.
 
 ### Configuration Endpoints
 

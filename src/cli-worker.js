@@ -1,10 +1,12 @@
 "use strict";
 
-exports.init = function(routes, errors, listeners, uid, gid, log)
+exports.init = function(options, log)
 {
 	var proxima = require('../');
 
-	var server = proxima.Server.create()
+	var server = proxima.Server.create({
+		specTimeout: options.specTimeout
+	})
 		.on('connection', function(client)
 		{
 			log(client.index + ' connect ' + proxima.endpoint.pretty(client.remotePort, client.remoteAddress) + ' -> ' + proxima.endpoint.pretty(client.localPort, client.localAddress, client.secure));
@@ -35,27 +37,27 @@ exports.init = function(routes, errors, listeners, uid, gid, log)
 
 	var i, max, hostname;
 
-	for (i = 0, max = routes.length; i < max; ++i)
+	for (i = 0, max = options.routes.length; i < max; ++i)
 	{
-		hostname = routes[i].hostname;
+		hostname = options.routes[i].hostname;
 
 		if (hostname.is === 'regex')
 			hostname = new RegExp(hostname.value);
 		else
 			hostname = hostname.value;
 
-		server.addRoute(hostname, routes[i].to);
+		server.addRoute(hostname, options.routes[i].to);
 	}
 
-	for (i = 0, max = errors.length; i < max; ++i)
-		server['set' + errors[i].code](errors[i].value);
+	for (i = 0, max = options.errors.length; i < max; ++i)
+		server['set' + options.errors[i].code](options.errors[i].value);
 
-	for (i = 0, max = listeners.length; i < max; ++i)
-		server.listen.apply(server, listeners[i]);
+	for (i = 0, max = options.listeners.length; i < max; ++i)
+		server.listen.apply(server, options.listeners[i]);
 
-	if (uid)
-		process.setuid(uid);
+	if (options.uid)
+		process.setuid(options.uid);
 
-	if (gid)
-		process.setuid(gid);
+	if (options.gid)
+		process.setuid(options.gid);
 };
