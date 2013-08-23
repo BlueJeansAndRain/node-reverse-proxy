@@ -171,8 +171,8 @@ If the hostname is not a regular expression then it is interpreted as a [glob](h
 
 The following glob wildcards are supported:
 
-* An astrisk "*"" matches any number of characters without restriction.
-* A question mark "?"" matches any number of non-separator characters.
+* An astrisk "*" matches any number of characters without restriction.
+* A question mark "?" matches any number of non-separator characters.
 	* Separators are colons ":" which are used for IPv6 octet separation, or periods "." which are used for IPv4 octet and domain name separation.
 
 ##### to
