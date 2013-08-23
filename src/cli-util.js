@@ -25,9 +25,15 @@ exports.eachRoute = function(routes, callback)
 			{
 				hostname = hostnames[j];
 				if (typeof hostname === 'string')
-					hostname = { type: 'string', value: hostname };
+				{
+					var match = hostname.match(/^\/(.+)\/([a-z]*)$/);
+					if (match)
+						hostname = { is: 'regex', value: (new RegExp(match[1], match[2])).toString() };
+					else
+						hostname = { is: 'string', value: hostname };
+				}
 				else if (hostname instanceof RegExp)
-					hostname = { type: 'regex', value: hostname.toString() };
+					hostname = { is: 'regex', value: hostname.toString() };
 				else
 					throw new Error("expecting regular expression or string hostname");
 

@@ -163,13 +163,17 @@ Each route object _must_ have the following two properties.
 
 ##### hostname
 
-A string representing a named host pattern, or an array of hostname patterns. Hostname patterns can contain wildcard characters.
+A string representing a named host pattern, a regular expression, or an array of hostname patterns and regular expressions.
 
-Wildcards:
+The hostname will be interpreted as a regular expression if it begins and ends with forward slashes "/".
 
-* An astrisk `*` matches any number of characters without restriction.
-* A question mark `?` matches any number of non-separator characters.
-	* Separators are colons `:` which are used for IPv6 octet separation, or periods `.` which are used for IPv4 octet and domain name separation.
+If the hostname is not a regular expression then it is interpreted as a [glob](http://en.wikipedia.org/wiki/Glob_%28programming%29) which can contain wildcards.
+
+The following glob wildcards are supported:
+
+* An astrisk "*"" matches any number of characters without restriction.
+* A question mark "?"" matches any number of non-separator characters.
+	* Separators are colons ":" which are used for IPv6 octet separation, or periods "." which are used for IPv4 octet and domain name separation.
 
 ##### to
 

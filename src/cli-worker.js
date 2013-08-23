@@ -42,7 +42,10 @@ exports.init = function(options, log)
 		hostname = options.routes[i].hostname;
 
 		if (hostname.is === 'regex')
-			hostname = new RegExp(hostname.value);
+		{
+			hostname = hostname.value.match(/^\/(.+)\/([a-z]*)$/);
+			hostname = new RegExp(hostname[1], hostname[2]);
+		}
 		else
 			hostname = hostname.value;
 
