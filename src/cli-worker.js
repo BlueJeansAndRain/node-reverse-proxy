@@ -9,7 +9,7 @@ exports.init = function(options, log)
 	})
 		.on('connection', function(client)
 		{
-			log(client.index + ' connect ' + proxima.endpoint.pretty(client.remotePort, client.remoteAddress) + ' -> ' + proxima.endpoint.pretty(client.localPort, client.localAddress, client.secure));
+			log(client.index + ' connect ' + proxima.endpoint.pretty(false, client.remotePort, client.remoteAddress) + ' -> ' + proxima.endpoint.pretty(client.localPort, client.localAddress, client.secure));
 
 			client
 				.on('hostname', function(hostname)

@@ -52,34 +52,38 @@ exports.normalize = core.fn.overload(
 
 exports.pretty = core.fn.overload(
 {
-	args: "array",
-	call: function(args)
+	args: [
+		{ type: "boolean", optional: true, _: true },
+		"array"
+	],
+	call: function(showSecure, args)
 	{
-		return exports.pretty.apply(exports, args);
+		return exports.pretty.apply(exports, [showSecure].concat(args));
 	}
 },
 {
 	args: [
-		"object",
-		{ type: "boolean", optional: true, _: false }
+		{ type: "boolean", optional: true, _: true },
+		"object"
 	],
-	call: function(options, showSecure)
+	call: function(showSecure, options)
 	{
 		return exports.pretty.apply(exports, exports.normalize(options, showSecure));
 	}
 },
 {
 	args: [
+		{ type: "boolean", optional: true, _: true },
 		"number",
 		{ type: "string", optional: true },
-		{ type: "boolean", optional: true }
+		{ type: "boolean", optional: true, _: false }
 	],
-	call: function(port, host, secure)
+	call: function(showSecure, port, host, secure)
 	{
 		var str = "port: " + port;
 		if (host)
 			str += ", host: " + host;
-		if (secure != null)
+		if (showSecure)
 			str += ", secure: " + secure;
 
 		return str;
@@ -87,13 +91,14 @@ exports.pretty = core.fn.overload(
 },
 {
 	args: [
+		{ type: "boolean", optional: true, _: true },
 		"string",
-		{ type: "boolean", optional: true }
+		{ type: "boolean", optional: true, _: false }
 	],
-	call: function(path, secure)
+	call: function(showSecure, path, secure)
 	{
 		var str = "path: " + path;
-		if (secure != null)
+		if (showSecure)
 			str += ", secure: " + secure;
 
 		return str;

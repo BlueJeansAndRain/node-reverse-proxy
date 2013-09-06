@@ -16,7 +16,7 @@ var proximaServer = proxima.Server.create()
 	.listen(8080, '127.0.0.1')
 	.on('connection', function(client)
 	{
-		console.log('Connection #' + client.index + ' from ' + proxima.endpoint.pretty(client.remotePort, client.remoteAddress));
+		console.log('Connection #' + client.index + ' from ' + proxima.endpoint.pretty(false, client.remotePort, client.remoteAddress));
 		console.log(' to ' + proxima.endpoint.pretty(client.localPort, client.localAddress, client.secure));
 
 		client

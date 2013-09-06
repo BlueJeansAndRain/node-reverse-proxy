@@ -125,9 +125,9 @@ exports.init = function()
 		util.eachRoute(options.routes, function(hostname, to)
 		{
 			if (hostname.is === 'regex')
-				log(' from ' + hostname.value + ' to ' + proxima.endpoint.pretty(to, true));
+				log(' from ' + hostname.value + ' to ' + proxima.endpoint.pretty(to));
 			else
-				log(' from "' + hostname.value + '" to ' + proxima.endpoint.pretty(to, true));
+				log(' from "' + hostname.value + '" to ' + proxima.endpoint.pretty(to));
 
 			routes.push({ hostname: hostname, to: to });
 		});
