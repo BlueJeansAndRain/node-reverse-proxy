@@ -31,7 +31,7 @@ exports.init = function(options, log)
 		})
 		.on('proxy', function(proxy, connectArgs)
 		{
-			log(proxy.client.index + '  ' + (proxy.client.proxied ? 're-proxy' : 'proxy') + ' ' + proxima.endpoint.pretty(connectArgs));
+			log(proxy.client.index + '  ' + (proxy.client.proxied ? 're-proxy' : 'proxy') + ' ' + proxima.endpoint.pretty(false, connectArgs));
 			proxy.client.proxied = true;
 		});
 
