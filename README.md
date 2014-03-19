@@ -298,8 +298,7 @@ If you create one and want to share, I would be happy to include some.
 Caveats
 -------
 
-Client Connection Pipelining
-============================
+###Client Connection Pipelining
 
 HTTP connection pipelining is the practice of sending multiple HTTP requests over a single TCP/IP connection. Modern browsers do this to avoid the overhead of establishing a new connection for each request. This can significantly improve page load time for pages that make many resource requests on load. Because proxima routes a connection based on the **first** HTTP request headers on a connection, subsequent pipelined requests will **not** be rerouted.
 
