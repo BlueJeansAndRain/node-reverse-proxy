@@ -298,8 +298,17 @@ If you create one and want to share, I would be happy to include some.
 Caveats
 -------
 
-###Client Connection Pipelining
+###SPDY
 
-HTTP connection pipelining is the practice of sending multiple HTTP requests over a single TCP/IP connection. Modern browsers do this to avoid the overhead of establishing a new connection for each request. This can significantly improve page load time for pages that make many resource requests on load. Because proxima routes a connection based on the **first** HTTP request headers on a connection, subsequent pipelined requests will **not** be rerouted.
+Google's SPDY protocol allows for a single persistant connection to be used for different domain names. This is different than the old standard for persistent connections which only allowed a connection to be reused for exactly the same domain name.
 
-In practice this doesn't seem to be much of an issue because browsers seem to assume that if the domain changes, the connection for a different domain with the same IP address, is a different endpoint and therefore a different connection. That means that the browser should be creating new connections any time Proxima might consider rerouting anyway. It's worth being aware of though if you see requests ending up in the wrong place.
+Proxima routes a new connection based on the domain in the first request's header. Any subsequent requests on the same connection will end up at the same place because no rerouting will occur.
+
+Servers must advertise that they support the SPDY protocol by responding with the "Alternate-Protocol" header.
+
+You should not advertise SPDY support when using Proxima if you serve resources on the same page from different sub-domains, and the following conditions are or might be true.
+* Multiple sub-domains point to the same IP address.
+* Multiple sub-domains use no SSL certificate or the same certificate.
+* Proxima is routing sub-domains that resolve to the same IP address, to separate internal endpoints.
+
+Standard persistant connections (even pipelined) should not be a problem.
