@@ -300,7 +300,7 @@ Caveats
 
 ###SPDY
 
-Google's SPDY protocol allows for a single persistant connection to be used for different domain names. This is different than the old standard for persistent connections which only allowed a connection to be reused for exactly the same domain name.
+Google's SPDY protocol allows for a single persistant connection to be used for different domain names. This is different than the old standard for persistent connections which only allowed a connection to be reused for exactly the same domain name, even if they resolve to the same network address.
 
 Proxima routes a new connection based on the domain in the first request's header. Any subsequent requests on the same connection will end up at the same place because no rerouting will occur.
 
