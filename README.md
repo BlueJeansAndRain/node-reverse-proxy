@@ -309,6 +309,8 @@ Servers must advertise that they support the SPDY protocol by responding with th
 You should not advertise SPDY support when using Proxima if you serve resources on the same page from different sub-domains, and the following conditions are or might be true.
 * Multiple sub-domains point to the same IP address.
 * Multiple sub-domains use no SSL certificate or the same certificate.
-* Proxima is routing sub-domains that resolve to the same IP address, to separate internal endpoints.
+* Proxima is routing sub-domains that resolve to the same IP address, to different endpoints.
 
 Standard persistant connections (even pipelined) should not be a problem.
+
+If I get feedback indicating a need for SPDY support, I'll work on it.
