@@ -1,6 +1,6 @@
 "use strict";
 
-var core = require('jscore');
+var core = require('./src/jscore');
 
 core.util.readonly(exports, {
 	Server: require('./src/Server.js'),
