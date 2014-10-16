@@ -3,7 +3,7 @@
 exports.init = function()
 {
 	var proxima = require('../');
-	var core = require('jscore');
+	var core = require('./jscore');
 	var path = require('path');
 	var constants = require('./Constants.js');
 	var util = require('./cli-util.js');

@@ -1,6 +1,6 @@
 "use strict";
 
-var core = require('jscore');
+var core = require('./jscore');
 var net = require('net');
 var constants = require('./Constants.js');
 var SNI = require('./SNI.js');

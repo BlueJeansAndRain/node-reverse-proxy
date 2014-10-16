@@ -1,6 +1,6 @@
 "use strict";
 
-var core = require('jscore');
+var core = require('./jscore');
 var resource = core.reflect.resourceSync;
 var escapeHtml = core.str.escapeHtml;
 

@@ -1,6 +1,6 @@
 "use strict";
 
-var core = require('jscore');
+var core = require('./jscore');
 var net = require('net');
 
 exports.normalize = core.fn.overload(

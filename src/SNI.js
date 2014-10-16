@@ -1,6 +1,6 @@
 "use strict";
 
-var core = require('jscore');
+var core = require('./jscore');
 
 var SNI = module.exports = {
 
