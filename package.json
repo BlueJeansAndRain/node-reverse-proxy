@@ -14,7 +14,7 @@
     "optimist": "0.6.x"
   },
   "devDependencies": {
-    "ws": "0.4.x"
+    "ws": "7.2.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
