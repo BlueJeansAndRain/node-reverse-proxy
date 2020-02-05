@@ -298,7 +298,7 @@ If you create one and want to share, I would be happy to include some.
 Caveats
 -------
 
-###SPDY
+### SPDY
 
 Google's SPDY protocol allows for a single persistant connection to be used for different domain names. This is different than the old standard for persistent connections which only allowed a connection to be reused for exactly the same domain name, even if they resolve to the same network address.
 
